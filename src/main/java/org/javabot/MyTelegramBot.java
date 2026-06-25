@@ -1,4 +1,4 @@
-package school.sorokin.javabot;
+package org.javabot;
 
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.longpolling.interfaces.LongPollingUpdateConsumer;

@@ -1,4 +1,4 @@
-package school.sorokin.javabot;
+package org.javabot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
