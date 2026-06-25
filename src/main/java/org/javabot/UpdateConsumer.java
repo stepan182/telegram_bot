@@ -1,6 +1,5 @@
 package org.javabot;
 
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
@@ -36,31 +35,33 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         );
     }
 
-    @SneakyThrows
     @Override
     public void consume(Update update) {
-        if (update.hasMessage()) {
-            String messageText = update.getMessage().getText();
-            Long chatId = update.getMessage().getChatId();
+        try {
+            if (update.hasMessage()) {
+                String messageText = update.getMessage().getText();
+                Long chatId = update.getMessage().getChatId();
 
-            if (messageText.equals("/start")) {
-                sendMainMenu(chatId);
-            } else if (messageText.equals("/keyboard")) {
-                sendReplyKeyboard(chatId);
-            } else if (messageText.equals("Hi")) {
-                sendMyName(chatId, update.getMessage().getFrom());
-            } else if (messageText.equals("Picture")) {
-                sendImage(chatId);
-            }else {
-                sendMessage(chatId, "I don't understand");
+                if (messageText.equals("/start")) {
+                    sendMainMenu(chatId);
+                } else if (messageText.equals("/keyboard")) {
+                    sendReplyKeyboard(chatId);
+                } else if (messageText.equals("Hi")) {
+                    sendMyName(chatId, update.getMessage().getFrom());
+                } else if (messageText.equals("Picture")) {
+                    sendImage(chatId);
+                } else {
+                    sendMessage(chatId, "I don't understand");
+                }
+            } else if (update.hasCallbackQuery()) {
+                handleCallbackQuery(update.getCallbackQuery());
             }
-        } else if (update.hasCallbackQuery()) {
-            handleCallbackQuery(update.getCallbackQuery());
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    @SneakyThrows
-    private void sendReplyKeyboard(Long chatId) {
+    private void sendReplyKeyboard(Long chatId) throws TelegramApiException {
         SendMessage message = SendMessage.builder()
                 .chatId(chatId.toString())
                 .text("This is an example of a regular keyboard:")
@@ -76,7 +77,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         telegramClient.execute(message);
     }
 
-    private void handleCallbackQuery(CallbackQuery callbackQuery) {
+    private void handleCallbackQuery(CallbackQuery callbackQuery) throws TelegramApiException {
         var data = callbackQuery.getData();
         var chatId = callbackQuery.getFrom().getId();
         var user = callbackQuery.getFrom();
@@ -88,11 +89,10 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    @SneakyThrows
     private void sendMessage(
             Long chatId,
             String messageText
-    ) {
+    ) throws TelegramApiException {
         SendMessage message = SendMessage.builder()
                 .text(messageText)
                 .chatId(chatId)
@@ -101,7 +101,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         telegramClient.execute(message);
     }
 
-    private void sendImage(Long chatId) {
+    private void sendImage(Long chatId) throws TelegramApiException {
         sendMessage(chatId, "Started uploading the image");
         new Thread(() -> {
             var imageUrl = "https://picsum.photos/200";
@@ -123,7 +123,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         }).start();
     }
 
-    private void sendRandom(Long chatId) {
+    private void sendRandom(Long chatId) throws TelegramApiException {
         var randomInt = ThreadLocalRandom.current().nextInt();
         sendMessage(chatId, "You random number: " + randomInt);
     }
@@ -131,7 +131,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
     private void sendMyName(
             Long chatId,
             User user
-    ) {
+    ) throws TelegramApiException {
         var text = "Hi!\n\nYour name: %s\nYour nik: @%s"
                 .formatted(
                         user.getFirstName() + " " + user.getLastName(),
@@ -140,8 +140,7 @@ public class UpdateConsumer implements LongPollingSingleThreadUpdateConsumer {
         sendMessage(chatId, text);
     }
 
-    @SneakyThrows
-    private void sendMainMenu(Long chatId) {
+    private void sendMainMenu(Long chatId) throws TelegramApiException {
         SendMessage message = SendMessage.builder()
                 .text("Welcome! Choose an action:")
                 .chatId(chatId)
